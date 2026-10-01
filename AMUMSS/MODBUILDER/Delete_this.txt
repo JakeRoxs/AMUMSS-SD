@@ -1,0 +1,71 @@
+-- list of files no longer supported
+-- and that can be deleted
+.\README - AMUMSS.txt
+.\README - AMUMSS installation.txt
+.\README - AMUMSS_installation.txt
+.\README - AMUMSS Script Rules.html
+.\README - Creating a Patch for existing MOD PAKs.txt
+.\README - Creating_a_Patch_for_existing_MOD_PAKs.txt
+.\README - General Information on AMUMSS.txt
+.\README - OPTIONS DEFINITIONS.txt
+.\README - What are ShowExtraSections.txt
+.\README - What to do when NMS is updated.txt
+.\README - What_to_do_when_NMS_is_updated.txt
+.\README - What's new.txt
+.\README - AMUMSS Version 3.9.5W.txt
+.\README - What's new in 3.9.5.6W.txt
+.\README - What's new in 3.9.5.92W.txt
+.\README - What's new in 3.9.5.93W.txt
+.\README - What's new in 3.9.5.94W.txt
+.\README - What's new in 3.9.5.95W.txt
+.\README - What's new in 3.9.5.96W.txt
+.\README - What's new in 3.9.5.97W.txt
+.\README - What's new in 3.9.5.98W.txt
+.\README - Nexus MODBUILDER.txt
+.\README - Script_Rules.txt
+.\README - Script_Rules.lua
+..\README\ModScript_folder_structure.lua
+..\README\SED_HELP.txt
+.\log.txt
+.\x64
+.\ModScript_Manager.exe
+..\MODBUILDER\MBINCompiler.current.exe
+..\MODBUILDER\MBINCompiler.previous.exe
+..\MODBUILDER\libMBIN.current.exe
+..\MODBUILDER\libMBIN.previous.exe
+..\MODBUILDER\MODS_pak_list.txt
+.\COMBINE_name.txt
+.\NEW_BUILDMOD.bat
+.\libMBIN.dll
+.\libMBIN.previous.dll
+.\NMS PCBANKS Explorer.exe
+.\Check_CONFLICTS.bat
+-- .\EXML_NameHash_updater.bat
+-- .\RemoveTrailingSpacesNon-empty.bat
+-- .\Test_AMUMSS_install.bat
+-- .\Test_CURL.bat
+.\MASTER_FOLDER_PATH.txt
+..\MODBUILDER\NMS_FOLDER.TXT
+-- .\NMS_FOLDER.txt
+.\NMS_FULL_pak_list.txt
+.\NMS_pak_Dir.txtPretty.lua
+.\NMS_pak_list.txtPretty.lua
+.\Check_CONFLICTS_in_MODS.bat
+.\ModScriptCollection\LearningExamples\Advanced
+.\ModScriptCollection\LearningExamples
+.\ModScriptCollection\MoreLearningExamples\Commented
+.\ModScriptCollection\MoreLearningExamples
+.\ModScriptCollection
+-- .\Log_file_cleaner.bat
+.\SavedSections
+-- .\_MapFileMaker.exe
+.\ModScriptCheck
+.\MapFileTrees
+..\MODBUILDER\Extras\MBINCompiler_OldVersions\MBINCompiler.1.38.0.exe
+.\___COMBINEx.txt
+.\___USE.txt
+..\TOOLS\MapFileTrees
+..\TOOLS\FileStructures
+..\ModScript\ModHelperScripts\Dictionary_and_Images.lua
+..\ModScript\ModHelperScripts\ImageDictionary.lua
+..\TOOLS\ModLuaLearningCollection\Useful Utility Scripts

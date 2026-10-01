@@ -1,0 +1,30 @@
+{
+  "repository": "https://github.com/HolterPhylo/AMUMSS",
+  "tag": "v5.6.2.0W",
+  "asset": "UPDATE.-.5.6.2.0.FULL.7z",
+  "url": "https://github.com/HolterPhylo/AMUMSS/releases/download/v5.6.2.0W/UPDATE.-.5.6.2.0.FULL.7z",
+  "sha256": "4a2887f739e9c1a532e73b7fc7cf86b6de87aab6a152cb68d700f2d1cfd25c18",
+  "size_bytes": 55922301,
+  "destination": "AMUMSS",
+  "excluded_directories": [
+    ".vs", "obj", "Build", "NMSPE_Output", "UPDATE", "MBINCompiler_OldVersions"
+  ],
+  "excluded_files": [
+    "MODBUILDER/exitCode.txt",
+    "MODBUILDER/ArrayInfo/array_data.txt",
+    "MODBUILDER/MBINCompilerDownloader/temp1.txt",
+    "MODBUILDER/MBINCompilerDownloader/temp2.txt",
+    "MODBUILDER/MBINCompilerDownloader/URLPrevious.txt",
+    "MODBUILDER/MBINCompilerDownloader/URL_2_Previous.txt",
+    "MODBUILDER/NMS_FOLDER_BAK.txt"
+  ],
+  "included_extensions": [
+    ".bat", ".lua", ".py", ".cs", ".csproj", ".sln", ".vbs", ".ps1",
+    ".h", ".hpp", ".cfg", ".toml", ".txt", ".md", ".html", ".css",
+    ".gif", ".jpg", ".crt", ".def", ".exml", ".backup"
+  ],
+  "included_files": [
+    "MODBUILDER/LICENSES/LANES-COPYRIGHT",
+    "MODBUILDER/ArrayInfo/ArrayInfo.runtimeconfig.json"
+  ]
+}

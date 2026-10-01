@@ -1,0 +1,9 @@
+std = "lua53"
+
+[config]
+empty_if = { comments_count = true }
+shadowing = { ignore_pattern = "^(?:_|self)" }
+unscoped_variables = { ignore_pattern = "^(?:_|NMS_MOD_DEFINITION_CONTAINER)" }
+unused_variable = { ignore_pattern = "^(?:_|NMS_MOD_DEFINITION_CONTAINER)" }
+multiple_statements = { one_line_if = "allow" }
+

@@ -263,3 +263,26 @@ paket-files/
 # Auto-generated documentation
 docs/classes/
 html_docs/
+
+# Release binaries and archives are obtained separately, not vendored source.
+/AMUMSS/**/*.exe
+/AMUMSS/**/*.dll
+/AMUMSS/**/*.lib
+/AMUMSS/**/*.exe.AV
+/AMUMSS/**/*.lnk
+*.7z
+/AMUMSS/MODBUILDER/ArrayInfo/ToBuild/Build/
+/AMUMSS/MODBUILDER/Extras/MBINCompiler_OldVersions/
+
+# Local game data, build products, and user scripts.
+# Existing tracked legacy artifacts remain tracked until explicitly migrated.
+/AMUMSS/Builds/
+/AMUMSS/ModScript/
+/AMUMSS/GlobalMEFTI/
+/AMUMSS/TOOLS/NMSPE_Output/
+/AMUMSS/TOOL/NMSPE_Output/
+/AMUMSS/TOOLS/SavedSections/
+/AMUMSS/TOOLS/UNPACKED_DECOMPILED_PAKs/
+/AMUMSS/MODBUILDER/UPDATE/
+/AMUMSS/MODBUILDER/_TEMP*/
+__pycache__/
