@@ -1,0 +1,51 @@
+diff --git a/AMUMSS/MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py b/AMUMSS/MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py
+--- a/AMUMSS/MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py
++++ b/AMUMSS/MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py
+@@ -125,8 +125,8 @@ class Compressor():
+     def __init__(self, platform: Platform = Platform.WINDOWS):
+         self.platform = platform
+         if self.platform == Platform.WINDOWS:
+-            # TEMP fix for decompression. Won't work for compression.
+             self.compressor = zstd.ZstdDecompressor()
++            self.pc_compressor = zstd.ZstdCompressor()
+         elif self.platform == Platform.MAC:
+             self.compressor = lz4.block
+         else:  # SWITCH
+@@ -135,7 +135,9 @@ class Compressor():
+             )
+ 
+     def compress(self, buffer: memoryview) -> bytes:
+-        if self.platform == Platform.WINDOWS or self.platform == Platform.MAC:
++        if self.platform == Platform.WINDOWS:
++            return self.pc_compressor.compress(buffer)
++        elif self.platform == Platform.MAC:
+             return self.compressor.compress(
+                 buffer,
+                 store_size=False,
+@@ -654,7 +656,7 @@ def pack(files: list[str], root_directory: str, filename_hash: bytes,
+                     # On windows the path will have \'s instead of /'s. Fix it.
+                     if op.sep == "\\":
+                         relpath = pathlib.PureWindowsPath(relpath).as_posix()
+-                    relpath_bytes = relpath.encode()
++                    relpath_bytes = relpath.lower().encode()
+                     filepath_data += relpath_bytes + b"\x0D\x0A"
+                     rel_paths.append(relpath_bytes)
+         else:
+@@ -664,12 +666,15 @@ def pack(files: list[str], root_directory: str, filename_hash: bytes,
+             # On windows the path will have \'s instead of /'s. Fix it.
+             if op.sep == "\\":
+                 relpath = pathlib.PureWindowsPath(relpath).as_posix()
+-            relpath_bytes = relpath.encode()
++            relpath_bytes = relpath.lower().encode()
+             filepath_data += relpath_bytes + b"\x0D\x0A"
+             rel_paths.append(relpath_bytes)
+     filepath_data_len = len(filepath_data)
+ 
+-    # Hash the file names
++    if len(set(rel_paths)) != len(rel_paths):
++        raise ValueError("Archive paths collide after lowercase normalization")
++
++    # Hash the canonical paths, not the case-sensitive host filenames.
+     for fname in rel_paths:
+         hashes.append(hashlib.md5(fname).digest())
+ 

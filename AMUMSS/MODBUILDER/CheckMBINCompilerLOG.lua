@@ -10,7 +10,11 @@ H.pv(">>>     In CheckMBINCompilerLOG.lua")
 H.gfilePATH = arg[1] --for Report()
 THIS = "In CheckMBINCompilerLOG: "
 
-local LogTable = H.ParseTextFileIntoTable(arg[2]..[[MBINCompiler.log]])
+local compilerLogPath = arg[2]..[[MBINCompiler.log]]
+if package.config:sub(1,1) == "/" then
+  compilerLogPath = (H.getPath(H.gCurrentMBINCompilerPath) or "./").."MBINCompiler.log"
+end
+local LogTable = H.ParseTextFileIntoTable(compilerLogPath)
 
 --starting folder varies
 local MASTER_FOLDER_PATH = string.gsub(lfs.currentdir(),[[\MODBUILDER]],"")..[[\]] -- \ required because we are in AMUMSS folder
@@ -337,4 +341,3 @@ H.Report_flush(arg[4],THIS)
 H.LuaEndedOk(THIS)
 
 --                        Logger.LogMessage( null, "INFO", $"{CommandLine.GetFileInfo( mbin )}" );
-

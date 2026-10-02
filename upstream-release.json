@@ -1,6 +1,19 @@
 {
   "repository": "https://github.com/HolterPhylo/AMUMSS",
   "tag": "v5.6.2.0W",
+  "application_origin": {
+    "version": "5.6.2.0w",
+    "checked_at": "2026-10-01",
+    "ownership": "editable AMUMSS-SD application fork, not an external dependency",
+    "update_policy": "selective reviewed merges; no automatic source reset or release reimport during normal setup",
+    "audit_status": "newest verified public origin; downloaded mod marker does not establish a newer release requirement"
+  },
+  "application_components": {
+    "arrayinfo": {
+      "path": "AMUMSS/MODBUILDER/ArrayInfo/ToBuild",
+      "status": "project-owned net8.0 helper with linux-x64/win-x64 targets; missing libMBIN..dll binding requires integration review"
+    }
+  },
   "asset": "UPDATE.-.5.6.2.0.FULL.7z",
   "url": "https://github.com/HolterPhylo/AMUMSS/releases/download/v5.6.2.0W/UPDATE.-.5.6.2.0.FULL.7z",
   "sha256": "4a2887f739e9c1a532e73b7fc7cf86b6de87aab6a152cb68d700f2d1cfd25c18",
@@ -10,6 +23,8 @@
     ".vs", "obj", "Build", "NMSPE_Output", "UPDATE", "MBINCompiler_OldVersions"
   ],
   "excluded_files": [
+    "MODBUILDER/bint.lua",
+    "MODBUILDER/lanes.lua",
     "MODBUILDER/exitCode.txt",
     "MODBUILDER/ArrayInfo/array_data.txt",
     "MODBUILDER/MBINCompilerDownloader/temp1.txt",
@@ -18,6 +33,7 @@
     "MODBUILDER/MBINCompilerDownloader/URL_2_Previous.txt",
     "MODBUILDER/NMS_FOLDER_BAK.txt"
   ],
+  "excluded_prefixes": ["MODBUILDER/HGPAK/HGPAKTool/"],
   "included_extensions": [
     ".bat", ".lua", ".py", ".cs", ".csproj", ".sln", ".vbs", ".ps1",
     ".h", ".hpp", ".cfg", ".toml", ".txt", ".md", ".html", ".css",

@@ -1,0 +1,5 @@
+# HGPAKTool's direct runtime dependencies; no optional json5 support enabled.
+# These default installs have no mandatory transitive requirements; do not enable
+# zstandard[cffi] or lz4 test/docs extras without extending the pins.
+zstandard==0.25.0
+lz4==4.4.5

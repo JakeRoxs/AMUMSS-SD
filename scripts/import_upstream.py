@@ -20,6 +20,8 @@ def selected(name, config):
         return False
     if name in config["excluded_files"]:
         return False
+    if any(name.startswith(prefix) for prefix in config.get("excluded_prefixes", [])):
+        return False
     return (name in config["included_files"]
             or path.suffix.lower() in config["included_extensions"])
 

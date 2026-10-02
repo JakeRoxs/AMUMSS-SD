@@ -1,4 +1,5 @@
 -->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+local isWindows = package.config:sub(1,1) == "\\"
 function HandleModScript(H, MOD_DEF, IsMulti_pak, global_integer_to_float, conf, _bScriptName)
   H.pv(H.THIS.."From HandleModScript()")
   
@@ -230,9 +231,13 @@ local function AddFiles(H, tRef)
           prn2("@@@ 2:      DestNormFolderPath = ["..DestNormFolderPath.."]")
           --local DestNormFilePath = H.NormalizePath(H.gMASTER_FOLDER_PATH .. H.gPathToModbuilderMod .. DestNormOrgFilenamePath)
           local DestNormFilePath = H.NormalizePath(H.gPathToModbuilderMod .. DestNormOrgFilenamePath)
+          if not isWindows then
+            local parent = DestNormFilePath:gsub([=[\]=], "/"):match("^(.*)/")
+            if parent then H.mkdir(parent) end
+          end
           prn2("@@@ 3:        DestNormFilePath = ["..DestNormFilePath.."]")
           
-          local _,count = strgsub(DestNormOrgFilenamePath,[[\]],"")
+          local _,count = strgsub(DestNormOrgFilenamePath,"[\\/]","")
           prn2("@@@    count '\\' = "..count)
           if count > 0 then
             if not H.IsDirExist(strgsub(DestNormFolderPath,[[\]],[[\\]])) then
@@ -260,15 +265,25 @@ local function AddFiles(H, tRef)
               prn2("@@@ pakName = "..pakName)
               
               --were to save the extracted file
-              local tmpFilePath = [[.\_INTERNAL]]
+              local tmpFilePath = isWindows and [[.\_INTERNAL]] or [[./_INTERNAL]]
               H.mkdir(tmpFilePath)
               
   -- local cmd = [[psarc.exe extract "]]..H.gNMS_PCBANKS_FOLDER_PATH..pakName..[[" --to="]]..tmpFilePath..[[" "]]..source..[[" -y]]
   -- ONE file at the time
-  local cmd = [[hgpaktool.exe -U --upper -A -O "]]..tmpFilePath..[[" -f "]]..string.gsub(source,[[\]],[[/]])..[[" "]]..H.gNMS_PCBANKS_FOLDER_PATH..pakName..[["]]
-  -- print("A: "..cmd)
-              prn2("@@@ 5a: cmd = ["..cmd.."]")
-              local success,sResult,nResult = H.NewThread(cmd)
+  -- Platform-aware HGPAKTool command
+  local hgpaktoolCmd
+  if isWindows then
+    hgpaktoolCmd = [[hgpaktool.exe -U --upper -A -O "]]..tmpFilePath..[[" -f "]]..string.gsub(source,[[\]],[[/]])..[[" "]]..H.gNMS_PCBANKS_FOLDER_PATH..pakName..[["]]
+  else
+    -- On Linux, use the Python script with absolute path
+    -- Escape apostrophes in paths for shell compatibility
+    local escapedSource = string.gsub(source,[[\]],[[/]])
+    local escapedPakPath = string.gsub(H.gNMS_PCBANKS_FOLDER_PATH..pakName, [["_"]], [[\_]])
+    hgpaktoolCmd = [[python3 ]]..H.gMASTER_FOLDER_PATH..[[MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py -U --upper -A -O "]]..tmpFilePath..[[" -f "]]..escapedSource..[[" "]]..escapedPakPath..[["]]
+  end
+              print("A: "..hgpaktoolCmd)
+              prn2("@@@ 5a: cmd = ["..hgpaktoolCmd.."]")
+              local success,sResult,nResult = H.NewThread(hgpaktoolCmd)
               prn2("@@@ 5b: result = ["..strformat("%s, %s with (%d)",success,sResult,nResult).."]")
               
               if success then
@@ -340,40 +355,47 @@ local function AddFiles(H, tRef)
             --       source = FILE_CONTENT
             --  destination = a NMS path in MODBUILDER\MOD folder
             --                a Destination Filename is REQUIRED
-            if not newFilenameProvided then
-              print(">>> "..H.gcWARNING.." [WARNING] ADD_FILES["..i.."]: Missing DESTINATION filename, required with FILE_CONTENT. Please verify your script "..H._zDEFAULT)
-              H.Report(CurrentScriptName,"ADD_FILES["..i.."]: Missing DESTINATION filename, required with FILE_CONTENT. Please verify your script","WARNING")
-            else
-              if not H.gIs_LEAN_MODE then
-                print("      create file: "..DestNormOrgFilenamePath)
-              end
-              H.Report("","      create 'file': "..[["]]..DestNormOrgFilenamePath..[["]])
-              DestNormFilePath = strgsub(DestNormFilePath,[[\]],[[\\]])
-              local FileData = AddFilesST["FILE_CONTENT"]:gsub([[\\]],[[\]]) -- change \\ to \ in the string
-              
-              if type(FileData) == "string" and H.ltrim(FileData):sub(1,5) == [[<?xml]] then
-                -- an EXML: auto-indentation ON
-                local FileDataTable = H.stringToTable(FileData)
+              if not newFilenameProvided then
+                print(">>> "..H.gcWARNING.." [WARNING] ADD_FILES["..i.."]: Missing DESTINATION filename, required with FILE_CONTENT. Please verify your script "..H._zDEFAULT)
+                H.Report(CurrentScriptName,"ADD_FILES["..i.."]: Missing DESTINATION filename, required with FILE_CONTENT. Please verify your script","WARNING")
+              else
+                if not H.gIs_LEAN_MODE then
+                  print("      create file: "..DestNormOrgFilenamePath)
+                end
+                H.Report("","      create 'file': "..[["]]..DestNormOrgFilenamePath..[["]])
+                if isWindows then
+                  DestNormFilePath = strgsub(DestNormFilePath,[[\]],[[\\]])
+                end
+                local FileData = AddFilesST["FILE_CONTENT"]:gsub([[\\]],[[\]]) -- change \\ to \ in the string
                 
-                -- print(" = = = = = BEFORE")
-                -- for i=1,#FileDataTable do
-                  -- print(FileDataTable[i])
-                -- end
-                -- print(" = = = = = END BEFORE")
+                if type(FileData) == "string" and H.ltrim(FileData):sub(1,5) == [[<?xml]] then
+                  -- an EXML: auto-indentation ON
+                  local FileDataTable = H.stringToTable(FileData)
+                  
+                  -- print(" = = = = = BEFORE")
+                  -- for i=1,#FileDataTable do
+                    -- print(FileDataTable[i])
+                  -- end
+                  -- print(" = = = = = END BEFORE")
 
-                FileDataTable = H.AutoAdjustIndentation(FileDataTable,FileDataTable,1)
-                
-                -- print(" = = = = = AFTER")
-                -- for i=1,#FileDataTable do
-                  -- print(FileDataTable[i])
-                -- end
-                -- print(" = = = = = END AFTER")
+                  FileDataTable = H.AutoAdjustIndentation(FileDataTable,FileDataTable,1)
+                  
+                  -- print(" = = = = = AFTER")
+                  -- for i=1,#FileDataTable do
+                    -- print(FileDataTable[i])
+                  -- end
+                  -- print(" = = = = = END AFTER")
 -- H.WFAK()
-                FileData = table.concat(FileDataTable,"\n")
-              end
-              
-              -- add to list
-              local dest = strsub(DestNormFilePath,strfind(DestNormFilePath,[[MOD\\]],1,true)+5):gsub([[\\]],[[\]])
+                  FileData = table.concat(FileDataTable,"\n")
+                end
+                
+                -- add to list
+                local dest
+                if isWindows then
+                  dest = strsub(DestNormFilePath,strfind(DestNormFilePath,[[MOD\\]],1,true)+5):gsub([[\\]],[[\]])
+                else
+                  dest = strsub(DestNormFilePath,strfind(DestNormFilePath,[[MOD/]],1,true)+4)
+                end
               -- print("@@@ CONTENT: Dest = ["..dest.."]")
               -- printf("UserScriptName = %s",UserScriptName)
               if not scriptFileList[dest] then
@@ -3940,8 +3962,8 @@ My.CheckPoint(3)
   H.Dprintf(H._zWHITEonDARKCYAN.."At "..H.dClock().." ENTERING: text_to_add section (%.0fKb)"..H._zDEFAULT,collectgarbage("count"))
   if text_to_add then
     local function CheckAddString(s)
-      local _,opening = s:gsub("<","<",-1)
-      local _,closing = s:gsub(">",">",-1)
+      local _,opening = s:gsub("<","<")
+      local _,closing = s:gsub(">",">")
       local IsMissing = false
       if opening ~= closing then
         print(">>> "..H.gcWARNING..[[ [WARNING] missing '<' or '>' in "ADD" string: check your script! ]]..H._zDEFAULT)
@@ -6002,7 +6024,7 @@ My.CheckPoint(3)
   H.DEBUG_TableToStringCount_print("###  ---- H.WholeTextFileTable refresh DONE ----")
 
   if strfind(file,".MXML",1,true) then
-    _,My.lineEndings = strgsub(H.WholeTextFileTable[1],'>','>',-1)
+    _,My.lineEndings = strgsub(H.WholeTextFileTable[1],'>','>')
     if My.lineEndings ~= #TextFileTable then
       H.printf(">>> "..H.gcWARNING..[[ [WARNING] Modded MXML's line count(%d) does not match number of line endings ">"(%d), Keywords search and ADD could probably fail.  Please correct your script! ]]..H._zDEFAULT,#TextFileTable,My.lineEndings)
       H.printf(">>> "..H.gcWARNING..[[          Most probable cause is a previous "ADD" operation that did not include a trailing CRLF at the end of the string ]]..H._zDEFAULT)
@@ -8685,7 +8707,7 @@ H.DEBUG_CurrentLine_print(" = = = = STAY on 1st line")
                           F.firstPosStart,F.firstPosEnd = strfind(F.text,F.s)
                           
                           if F.firstPosEnd then
-                            F._,F.lineNumber = F.text:sub(1,F.firstPosEnd):gsub('>','>',-1)
+                            F._,F.lineNumber = F.text:sub(1,F.firstPosEnd):gsub('>','>')
                             F.linesNumFound[#F.linesNumFound + 1] = F.lineNumber + 1
                             
                             F.secondPos,F.nextPos = strfind(F.text,F.s,F.firstPosEnd + 1)
@@ -8698,13 +8720,13 @@ H.DEBUG_CurrentLine_print(" = = = = STAY on 1st line")
                               F.PreviouslineNumber = F.lineNumber
                               F.PreviousPosEnd = F.firstPosEnd + 1
                               
-                              _,F.lineNumber = F.text:sub(F.PreviousPosEnd,F.nextPos):gsub('>','>',-1)
+                              _,F.lineNumber = F.text:sub(F.PreviousPosEnd,F.nextPos):gsub('>','>')
                               F.linesNumFound[#F.linesNumFound + 1] = F.PreviouslineNumber + F.lineNumber + 1
                               
                               while F.nextPos do
                                 F.nextPos,F.endPos = strfind(F.text,F.s,F.nextPos + 1)
                                 if F.nextPos then
-                                  _,F.lineNumber = F.text:sub(F.PreviousPosEnd,F.endPos):gsub('>','>',-1)
+                                  _,F.lineNumber = F.text:sub(F.PreviousPosEnd,F.endPos):gsub('>','>')
                                   F.linesNumFound[#F.linesNumFound + 1] = F.PreviouslineNumber + F.lineNumber + 1
                                   
                                   F.nextPos = F.endPos + 1
@@ -10500,7 +10522,7 @@ function FindGroup(H, TextFileTable, WholeTextFileTable, prec_key_words, IsPrece
     
     if firstPosEnd then
       -- if My.DEBUG_CheckUniqueness then print("  firstPosEnd = "..firstPosEnd) end
-      local _,lineNumber = WholeTextFile:sub(1,firstPosEnd):gsub('>','>',-1)
+      local _,lineNumber = WholeTextFile:sub(1,firstPosEnd):gsub('>','>')
       linesNumFound[#linesNumFound + 1] = lineNumber + 1
       -- if My.DEBUG_CheckUniqueness then print("  A: lineNumber = "..linesNumFound[#linesNumFound]) end
       
@@ -10517,7 +10539,7 @@ function FindGroup(H, TextFileTable, WholeTextFileTable, prec_key_words, IsPrece
         local PreviousPosEnd = firstPosEnd + 1
         
         -- if My.DEBUG_CheckUniqueness then print("  FastCheckUniqueness: More than one") end
-        _,lineNumber = WholeTextFile:sub(PreviousPosEnd,nextPos):gsub('>','>',-1)
+        _,lineNumber = WholeTextFile:sub(PreviousPosEnd,nextPos):gsub('>','>')
         linesNumFound[#linesNumFound + 1] = PreviouslineNumber + lineNumber + 1
         -- if My.DEBUG_CheckUniqueness then print("  B: lineNumber = "..linesNumFound[#linesNumFound]) end
         
@@ -10527,7 +10549,7 @@ function FindGroup(H, TextFileTable, WholeTextFileTable, prec_key_words, IsPrece
         while nextPos do
           nextPos,endPos = strfind(WholeTextFile,s,nextPos + 1)
           if nextPos then
-            _,lineNumber = WholeTextFile:sub(PreviousPosEnd,endPos):gsub('>','>',-1)
+            _,lineNumber = WholeTextFile:sub(PreviousPosEnd,endPos):gsub('>','>')
             linesNumFound[#linesNumFound + 1] = PreviouslineNumber + lineNumber + 1
             -- if My.DEBUG_CheckUniqueness then print("  C: lineNumber = "..linesNumFound[#linesNumFound]) end
             
@@ -13009,11 +13031,15 @@ function OpenUserScript(H)
     local function CorrectEscape(script)
       -- WARNING: causes side-effect for some strings like COMMENT, MBIN_FS and inside user comments
       
-      -- makes \ inside a "" a \\ if used by the user (bad usage)
-      -- unless it is for "\"" which we change to string.char(1)
-      -- reverts any doubling of double \\
-      -- VERY FAST version
-      -- return strgsub(script,[[\]],[[\\]]):gsub([[\\\\]],[[\\]])
+      if not isWindows then
+        -- On Linux, convert Windows-style backslash paths to forward slashes
+        -- This allows mods written with Windows paths to work on Linux
+        -- Replace all \ with / to fix path issues in mod scripts
+        script = script:gsub("\\", "/")
+        return script
+      end
+      
+      -- Windows: original behavior
       return strgsub(script,[[\"]],string.char(1)):gsub([[\]],[[\\]]):gsub([[\\\\]],[[\\]])
     end
     --***************************************************************************************************
@@ -13255,11 +13281,15 @@ function OpenUserScript(H)
       -- revert before load
       script = strgsub(script,string.char(1),[[\"]])
       
-      success, chunk = xpcall(load(script, scriptStringName, 't', env), MyErrHandler) --better
+      success, chunk = xpcall(function() return load(script, scriptStringName, 't', env) end, MyErrHandler) --better
       -- local chunk, failure = load(script,"User Script",'t',env)
       
       if success then
-          -- chunk()
+          local ok, err = pcall(chunk)
+          if not ok then
+              print("Script execution error: " .. tostring(err))
+              success = false
+          end
       elseif chunk then
         print("")
         print("Lua is reporting: "..chunk)
@@ -14297,7 +14327,8 @@ function ProcessScript(H, NMS_MOD_DEFINITION_CONTAINER, IsMulti_pak, _bScriptNam
         if H.gDEBUG_CheckTables then H.CheckTables("LISTING: BEFORE Saving/Discarding: ") end
 
         local EXML_list = {}
-        EXML_list = H.ListDir(EXML_list,[[MOD\]],false,true) -- MOD\ makes it easier to remove later on
+        local modDirPath = isWindows and [[MOD\]] or [[MOD/]]
+        EXML_list = H.ListDir(EXML_list,modDirPath,false,true) -- MOD/ makes it easier to remove later on
         
         -- print(" = = = = = List of files in MOD")
         -- for i=1,#EXML_list do
@@ -14464,7 +14495,8 @@ function ProcessScript(H, NMS_MOD_DEFINITION_CONTAINER, IsMulti_pak, _bScriptNam
         -- XXXXXXXXXXXXXXXX  MBINCompiler.exe  XXXXXXXXXXXXXXXXXX
         if H.WDEBUG then H.WFAK("Just before calling MBINCompiler_C") end
         -- local status,result = H.MBINCompiler_C([[.\MOD]],H.gIs_LEAN_MODE)
-        local status,result = H.MBINCompiler_C([[.\MOD]],true)
+        local modDirForCompile = isWindows and [[.\MOD]] or [[./MOD]]
+        local status,result = H.MBINCompiler_C(modDirForCompile,true)
         
         H.switchBACK = false
         if status ~= "OK" and not gIsCompilerVersionsEqual then
@@ -14697,7 +14729,8 @@ function ProcessScript(H, NMS_MOD_DEFINITION_CONTAINER, IsMulti_pak, _bScriptNam
         H.DEBUG_ScriptContent_print("Before get list of files in MODBUILDER\\MOD")
         -- check in MOD if we really have something to pak beside the script
         local fileList = {}
-        fileList = H.ListDir(fileList,[[.\MOD]],nil,true,false)
+        local modDirPath2 = isWindows and [[.\MOD]] or [[./MOD]]
+        fileList = H.ListDir(fileList,modDirPath2,nil,true,false)
         
         local foundFilesTopak = false
         if #fileList > 0 then
@@ -14977,7 +15010,8 @@ function ProcessScript(H, NMS_MOD_DEFINITION_CONTAINER, IsMulti_pak, _bScriptNam
           
           if H.UpdateMODDER_Helper then
             -- we need to copy the ORIGINAL _TEMP\DECOMPILED files for this mod into TOOLS\MODDER_Helper\{thismod}\_ORG_MXML
-            local ListFiles = H.ListDir(ListFiles, [[.\MOD]], true, true)
+            local modDirPath3 = isWindows and [[.\MOD]] or [[./MOD]]
+            local ListFiles = H.ListDir(ListFiles, modDirPath3, true, true)
             for i=1,#ListFiles do
               -- H.printf("===>> ListFiles[%d] = [%s]",i,ListFiles[i])
               local ext = H.GetExtensionFromFilePath(ListFiles[i]):upper()
@@ -15773,7 +15807,9 @@ function pre_processScripts(H)
   
   --****************************  list scripts to process  *********************
   print("")
-  local cutPoint = #(H.gMASTER_FOLDER_PATH..[[ModScript\]])
+  -- Platform-aware cutPoint
+  local modScriptPath = isWindows and [[ModScript\]] or [[ModScript/]]
+  local cutPoint = #(H.gMASTER_FOLDER_PATH..modScriptPath)
   if H.IsArguments then
     cutPoint = 0
   end
@@ -15858,7 +15894,8 @@ function pre_processScripts(H)
         H.DeleteFile([[.\MOD\*.cs]])
         
         -- decompile MBIN files (they may not be in MBIN_table and would be deleted at the end)
-        local status,result = H.MBINCompiler_D([[.\MOD]],false,false,true,"     @@@ decompiling MBINs from paks...",true)
+        local modDirForDecompile = isWindows and [[.\MOD]] or [[./MOD]]
+        local status,result = H.MBINCompiler_D(modDirForDecompile,false,false,true,"     @@@ decompiling MBINs from paks...",true)
         -- H.printf("status = [%s], result = [%s]",status,result)
 
         -- NOW check the log
@@ -15877,7 +15914,7 @@ function pre_processScripts(H)
             H.SwitchToOtherMBINCompiler(H,"AMUMSS")
             
             -- decompile MBIN files (they may not be in MBIN_table and would be deleted at the end)
-            local status,result = H.MBINCompiler_D([[.\MOD]],false,false,true,"     @@@ decompiling MBINs from paks...",true)
+            local status,result = H.MBINCompiler_D(modDirForDecompile,false,false,true,"     @@@ decompiling MBINs from paks...",true)
             -- H.printf("status = [%s], result = [%s]",status,result)
             
             H.switchBACK = true
@@ -15933,7 +15970,7 @@ function pre_processScripts(H)
     H.DeleteFile(FilePathSource..[[\]]..H.gUSE_name,true)
     H.DeleteFile(FilePathSource..[[\]]..H.gCOMBINE_name,true)
     
-    local cmd = [[robocopy ]]..FilePathSource..[[\. ]]..FilePathSource..[[\. *.* /S /V /L /R:1 /NS /NDL /NP /NC /NJS /NJH /MT:12]]
+    local cmd = H.GetFileListCmd(FilePathSource)
     local mainMEFTIlist = H.GetList(cmd,true)
 
     table.sort(mainMEFTIlist)
@@ -16009,7 +16046,7 @@ function pre_processScripts(H)
     H.DeleteFile(FilePathSource..[[\]]..H.gCOMBINE_name,true)
     
     --get list of files in this MEFTI
-    local cmd = [[robocopy "]]..FilePathSource..[[\." "]]..FilePathSource..[[\." *.* /S /V /L /R:1 /NS /NDL /NP /NC /NJS /NJH /MT:12]]
+    local cmd = H.GetFileListCmd(FilePathSource)
     local MEFTIlist = H.GetList(cmd,true)
 
     table.sort(MEFTIlist)
@@ -16207,9 +16244,12 @@ function pre_processScripts(H)
     collectgarbage()
 
     H._bScriptCounter = i
-    H._bScriptName = H.trim(string.sub(H.gModScriptLuaDirList[i][1],cutPoint + 1))
+    -- Extract filename using a reliable pattern (last path component)
+    H._bScriptName = H.trim(H.gModScriptLuaDirList[i][1]:match("([^/\\]+)$"))
     
-    H.WriteToFile(H.gMASTER_FOLDER_PATH..[[ModScript\]]..H._bScriptName, "CurrentModScript.txt")
+    -- Platform-aware script path
+    local scriptDirName = isWindows and [[ModScript\]] or [[ModScript/]]
+    H.WriteToFile(H.gMASTER_FOLDER_PATH..scriptDirName..H._bScriptName, "CurrentModScript.txt")
     H.WriteToFile(H._bScriptName, "CurrentModScript_Short.txt")
     
     print("")
@@ -16422,7 +16462,7 @@ function pre_processScripts(H)
           end
           
           local ProcessInfo = os.capture([[tasklist /FI "ImageName eq luaM.exe"]])
-          local _,numUsedSlots = string.gsub(ProcessInfo,"luaM.exe","",-1)
+          local _,numUsedSlots = string.gsub(ProcessInfo,"luaM.exe","")
           if numUsedSlots == 0 then
             --should only be this instance
             -- print("ZZZZZZZZZZZ "..[[dofile("CreateMapFileTreeStarter.lua")]])
@@ -16440,8 +16480,12 @@ function pre_processScripts(H)
         if not H.gIs_LEAN_MODE then
           print(">>> [INFO]"..H._zBRIGHTGREEN..[[ Cleaning 'MODBUILDER\MOD']]..H._zDEFAULT)
         end
-        local cmd = [[CleanMod.bat]]
-        H.NewThread(cmd)
+        if isWindows then
+          H.NewThread([[CleanMod.bat]])
+        else
+          H.DeleteDir("./MOD")
+          H.mkdir("./MOD")
+        end
         
         -- reset list
         H.combinedScriptList = {}
@@ -16694,6 +16738,10 @@ function pre_processScripts(H)
 end --pre_processScripts()
 
 function IsCompilerVersionsEqual(H)
+  if not isWindows then
+    -- On Linux, MBINCompiler.exe binaries don't exist; return true to skip version check
+    return true
+  end
   local sLV,nLV = H.GetMBINCompilerVersion([[MBINCompiler.latest.exe]])
   local sPV,nPV = H.GetMBINCompilerVersion([[MBINCompiler.public.exe]])
   if sLV == sPV then
@@ -16853,11 +16901,16 @@ else
 end
 -- END: Test if NMS version is of the right type paks
 
-H.gPathToModbuilderMod = [[.\MOD\]] --was [[MODBUILDER\MOD\]]
+-- Platform-aware paths
+if isWindows then
+  H.gPathToModbuilderMod = [[.\MOD\]]
+  H.gPathToModScriptFromModbuilder = [[..\ModScript]]
+else
+  H.gPathToModbuilderMod = "./MOD/"
+  H.gPathToModScriptFromModbuilder = "../ModScript"
+end
 --in case it does not yet exist
 H.mkdir(H.gPathToModbuilderMod)
-
-H.gPathToModScriptFromModbuilder = [[..\ModScript]]
 
 -- H.gCurrentMBINCompilerPath = [[MBINCompiler.exe]]
 
@@ -17123,7 +17176,8 @@ if _bEXML == "Y" then
   SetupGENERIC_lua(H)
 end
 
-H.BackupType = string.upper(os.getenv("-BackupType"))
+local backupTypeEnv = os.getenv("-BackupType")
+H.BackupType = backupTypeEnv and string.upper(backupTypeEnv) or "NONE"
 
   -- H.gVerbose = true
   -- H.pv("H.gVerbose is ON")
@@ -17500,8 +17554,20 @@ H.LuaEndedOk(H.THIS)
 if LDebug then print("***     ENDING LoadAndExecuteModScript.lua") end
 
 H.exitCode = 0
-if H.IsCOMBINE_MODS then
+if isWindows and H.IsCOMBINE_MODS then
   H.exitCode = 1
+end
+if not isWindows then
+  local expectedScripts = tonumber(os.getenv("AMUMSS_EXPECTED_SCRIPTS"))
+  if expectedScripts and H._bTotalNumberScripts ~= expectedScripts then
+    print("ERROR: Not all selected scripts were discovered by the processor")
+    H.exitCode = 2
+  end
+  if #H.gModScriptFailed > 0 then
+    print("ERROR: "..#H.gModScriptFailed.." script failure(s); run incomplete")
+    for _, failure in ipairs(H.gModScriptFailed) do print(failure) end
+    H.exitCode = 2
+  end
 end
 
 -- H.WFAK()

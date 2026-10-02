@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AMUMSS Mod Builder (Experimental)
+Comment=Select mod archives to build in the native test workspace
+Exec=/bin/bash /home/jake/amumss-native-test/amumss-desktop.sh %F
+Icon=applications-games
+Terminal=false
+Categories=Game;

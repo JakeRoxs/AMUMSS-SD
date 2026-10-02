@@ -24,7 +24,6 @@ class SourceImportTests(unittest.TestCase):
             "BUILDMOD.bat", "MODBUILDER/LIST_ModScriptMBINs.BAT",
             "MODBUILDER/LoadHelpers.lua",
             "MODBUILDER/ArrayInfo/ToBuild/Program.cs",
-            "MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py",
             "MODBUILDER/LICENSES/LANES-COPYRIGHT",
             "MODBUILDER/buildmod_auto.backup",
             "MODBUILDER/css styles/AMUMSS.gif",
@@ -47,6 +46,13 @@ class SourceImportTests(unittest.TestCase):
 
     def test_excludes_binaries(self):
         for name in ("tool.exe", "tool.dll", "tool.lib", "tool.exe.AV", "tool.lnk"):
+            with self.subTest(name=name):
+                self.assertFalse(IMPORTER.selected(name, self.config))
+
+    def test_does_not_restore_replaced_dependency_sources(self):
+        for name in ("MODBUILDER/bint.lua", "MODBUILDER/lanes.lua",
+                     "MODBUILDER/HGPAK/HGPAKTool/hgpaktool.py",
+                     "MODBUILDER/HGPAK/HGPAKTool/utils.py"):
             with self.subTest(name=name):
                 self.assertFalse(IMPORTER.selected(name, self.config))
 
